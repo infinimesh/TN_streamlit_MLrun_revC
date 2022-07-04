@@ -48,6 +48,10 @@ with col2:
 
 st.markdown("<h1 style='text-align: center; color: grey;'>ML Audio Recognition App</h1>", 
             unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: black;'>Truck Norris</h1>", 
+            unsafe_allow_html=True)
+st.markdown("<h3 style='text-align: center; color: black;'>Canvas Cutting Detection</h3>", 
+            unsafe_allow_html=True)
 st.header(" ")
 st.header(" ")
 # st.title('ML Audio recognition App :sunglasses:')
@@ -231,13 +235,52 @@ st.markdown("<h2 style='text-align: center; color: grey;'>Analysis with ML model
 
 
 
+"In the followong list one can find"
+st.subheader("Two revisions of the ML models:")
+"rev.2 - is a relatively small architecture with only 4137 trainables parameters."
+"rev.3 - is upgraded model. This architechture is inspired by VGG model, but it is strongly reduced and tuned."
+st.subheader("The ML models are trained for different data")
+"Trial data - dataset mix of cuttings recorded in the office and diverse background sounds."
+"Realicstic Truck Data - is the dataset recorded using REAL truck."
+st.subheader("The Realicstic Truck Dataset includes two microphones")
+"Condenser - is a regular microphone listening acoustic waves if the air inside the truck space."
+"Piezo - is a picrophone mounted on the surface of the canvas, therefore more sensitive to waves inside a canvas and less sensitive to air waves."
+' '
+' '
+
+selected_ml_model = st.selectbox(label="Select ML model architecture and Data on which it is trained here:", 
+    options=[
+    "ML model Rev.2 >> Trial Data",
+
+    "ML model Rev.2 >> Realicstic Truck Data >> Piezo Mic",
+    "ML model Rev.2 >> Realicstic Truck Data >> Condenser Mic",
+
+    "ML model Rev.3 >> Realicstic Truck Data >> Piezo Mic",
+    "ML model Rev.3 >> Realicstic Truck Data >> Condenser Mic",
+    ])
+
+
 # ----------------------------------
 # ==== Load ML model and see it ====
 # ----------------------------------
 
 ## Load the model
 ##--------------------------------
-reloaded_model = tf.keras.models.load_model("./tf_models/modelTN2/modelTN2")
+# reloaded_model = tf.keras.models.load_model("./tf_models/modelTN2/modelTN2")
+if selected_ml_model == "ML model Rev.2 >> Trial Data":
+    reloaded_model = tf.keras.models.load_model("./tf_models/modelTN2/modelTN2")
+
+if selected_ml_model == "ML model Rev.2 >> Realicstic Truck Data >> Piezo Mic":
+    reloaded_model = tf.keras.models.load_model("./tf_models/modelTN_dsr_data_it4_475samples_16bit_piezo")
+if selected_ml_model == "ML model Rev.2 >> Realicstic Truck Data >> Condenser Mic":
+    reloaded_model = tf.keras.models.load_model("./tf_models/modelTN_dsr_data_it4_475samples_16bit_condenser")
+
+if selected_ml_model == "ML model Rev.3 >> Realicstic Truck Data >> Piezo Mic":
+    reloaded_model = tf.keras.models.load_model("./tf_models/modelTN__vgg_s8-64_l2233_s09e5__data_it4_475samples_16bit__piezo")
+if selected_ml_model == "ML model Rev.3 >> Realicstic Truck Data >> Condenser Mic":
+    reloaded_model = tf.keras.models.load_model("./tf_models/modelTN__vgg_s8-64_l2233_s195e4__data_it4_475samples_16bit__condenser")
+
+
 
 ## Check model architecture
 ##--------------------------------
