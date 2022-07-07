@@ -61,6 +61,8 @@ st.header(" ")
 
 
 
+
+
 ## -------------------------------
 ## ====  Select and load data ====
 ## -------------------------------
@@ -185,7 +187,10 @@ def get_spectrogram( waveform, sampling_rate ):
     return spectrogram
 
 
+#default values which is used to plot spectrogram and as input_shape unless it is changed according to a model specs
+#once again! this value might be overwritten for a specific model
 spectrogram_shape_to_analyze = (64*2*1, 64*4*1)
+
 
 def spectrogram_resize(spectrogram):
     return tf.image.resize(spectrogram, spectrogram_shape_to_analyze)
@@ -239,6 +244,7 @@ st.markdown("<h2 style='text-align: center; color: grey;'>Analysis with ML model
 st.subheader("Two revisions of the ML models:")
 "rev.2 - is a relatively small architecture with only 4137 trainables parameters."
 "rev.3 - is upgraded model. This architechture is inspired by VGG model, but it is strongly reduced and tuned."
+"EfficientNetB0 - is Efficient Net B0 model from Keras. It is trained on real truck data with extended background samles"
 st.subheader("The ML models are trained for different data")
 "Trial data - dataset mix of cuttings recorded in the office and diverse background sounds."
 "Realicstic Truck Data - is the dataset recorded using REAL truck."
@@ -251,6 +257,8 @@ st.subheader("The Realicstic Truck Dataset includes two microphones")
 selected_ml_model = st.selectbox(label="Select ML model architecture and Data on which it is trained here:", 
     options=[
     "ML model Rev.2 >> Trial Data",
+
+    "ML model EfficientNetB0 >> Realicstic Truck Data >> Piezo Mic",
 
     "ML model Rev.2 >> Realicstic Truck Data >> Piezo Mic",
     "ML model Rev.2 >> Realicstic Truck Data >> Condenser Mic",
@@ -266,9 +274,11 @@ selected_ml_model = st.selectbox(label="Select ML model architecture and Data on
 
 ## Load the model
 ##--------------------------------
-# reloaded_model = tf.keras.models.load_model("./tf_models/modelTN2/modelTN2")
 if selected_ml_model == "ML model Rev.2 >> Trial Data":
     reloaded_model = tf.keras.models.load_model("./tf_models/modelTN2/modelTN2")
+
+if selected_ml_model == "ML model EfficientNetB0 >> Realicstic Truck Data >> Piezo Mic":
+    reloaded_model = tf.keras.models.load_model("./tf_models/efficientnetB0")
 
 if selected_ml_model == "ML model Rev.2 >> Realicstic Truck Data >> Piezo Mic":
     reloaded_model = tf.keras.models.load_model("./tf_models/modelTN_dsr_data_it4_475samples_16bit_piezo")
@@ -279,6 +289,9 @@ if selected_ml_model == "ML model Rev.3 >> Realicstic Truck Data >> Piezo Mic":
     reloaded_model = tf.keras.models.load_model("./tf_models/modelTN__vgg_s8-64_l2233_s09e5__data_it4_475samples_16bit__piezo")
 if selected_ml_model == "ML model Rev.3 >> Realicstic Truck Data >> Condenser Mic":
     reloaded_model = tf.keras.models.load_model("./tf_models/modelTN__vgg_s8-64_l2233_s195e4__data_it4_475samples_16bit__condenser")
+
+
+
 
 
 
@@ -296,11 +309,32 @@ st.code(body=short_model_summary, language="Python")
 # -----------------------------------
 # ==== Predict with loaded Model ====
 # -----------------------------------
+# multiple if-statements are needed to adjust inputs for models
 
-y_pred_1 = reloaded_model.predict(np.expand_dims(spectrogram_arr_resized, 0))
-audio_data_predicted_label = 1 - np.round(y_pred_1[0,0], decimals=2) #1-val bcoz model trained as 0=event, 1=bkg
+if selected_ml_model == "ML model EfficientNetB0 >> Realicstic Truck Data >> Piezo Mic":
+    spectrogram_shape_to_analyze_ENetB0 = (64, 64)
+    spectrogram_arr_resized_ENetB0 = tf.image.resize(spectrogram_arr, spectrogram_shape_to_analyze_ENetB0)
+    y_pred_ENetB0 = reloaded_model.predict(np.expand_dims(spectrogram_arr_resized_ENetB0, 0))
+    audio_data_predicted_label = np.round(y_pred_ENetB0[0,0], decimals=2)
 
-print(f"Predicted Label: {audio_data_predicted_label}")
+if selected_ml_model == 'ML model Rev.2 >> Trial Data':
+    y_pred_1 = reloaded_model.predict(np.expand_dims(spectrogram_arr_resized, 0))
+    audio_data_predicted_label = 1 - np.round(y_pred_1[0,0], decimals=2) #1-val bcoz model trained as 0=event, 1=bkg
+
+if selected_ml_model == "ML model Rev.2 >> Realicstic Truck Data >> Piezo Mic" or \
+        selected_ml_model == "ML model Rev.2 >> Realicstic Truck Data >> Condenser Mic" or \
+        selected_ml_model == "ML model Rev.3 >> Realicstic Truck Data >> Piezo Mic" or \
+        selected_ml_model == "ML model Rev.3 >> Realicstic Truck Data >> Condenser Mic" :
+    y_pred_2 = reloaded_model.predict(np.expand_dims(spectrogram_arr_resized, 0))
+    audio_data_predicted_label = np.round(y_pred_2[0,0], decimals=2)
+
+
+
+ 
+
+
+
+
 st.subheader("Prediction:")
 
 pred_index = np.round(audio_data_predicted_label, decimals=0).astype(int)
@@ -310,3 +344,15 @@ results_options = ['No cutting sound detected.',
 st.markdown(f"### _{results_options[pred_index]}_")
 # st.write(f"Result: {results_options[pred_index]}")
 
+
+
+## Output of more tech data
+##--------------------------------
+st.markdown(f"#### Model Prediction Output: {audio_data_predicted_label}")
+print(f"Model Prediction Output: {audio_data_predicted_label}")
+
+st.markdown(f"#### Model Prediction Output Index: {pred_index}")
+print(f"Model Prediction Output Index: {pred_index}")
+
+st.write(uploaded_audio_file)
+print(uploaded_audio_file)
