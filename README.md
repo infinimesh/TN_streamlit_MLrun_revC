@@ -5,6 +5,15 @@ the app address
 https://infinimesh-tn-streamlit-mlrun-revc-streamlit-app-ki9uv5.streamlitapp.com/
 
 ```
+How to install streamlit locally:
+==================================
+1. Install environment manager: conda
+2. In terminal: conda create -n ID_ML_streamlit python=3.9
+3. In terminal: conda activate ID_ML_streamlit
+4. Download this repo and open it in terminal
+5. In terminal: pip install -r ./requirements.txt
+
+
 How to run streamlit app:
 ==========================
 1. open terminal: 
