@@ -5,28 +5,18 @@
 ##Libraries for Streamlit
 ##--------------------------------
 import streamlit as st
-import altair as alt
-import pydub
-# import librosa.display
-import librosa
 import io
-from scipy.io import wavfile
+from scipy.io import wavfile as scipy_wav
 from PIL import Image
 
 ##Libraries for prediction
 ##--------------------------------
-# import os
-# import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
-# import seaborn as sns
-# from IPython.display import Audio, display
-# from sklearn.model_selection import train_test_split
 import tensorflow as tf
-# from tensorflow.keras import layers
 from tensorflow.keras import models
-# import tensorflow_datasets as tfds
-# import pickle
+
+
 
 
 
@@ -52,10 +42,10 @@ st.markdown("<h1 style='text-align: center; color: black;'>Truck Norris</h1>",
             unsafe_allow_html=True)
 st.markdown("<h3 style='text-align: center; color: black;'>Canvas Cutting Detection</h3>", 
             unsafe_allow_html=True)
+st.markdown("<h3 style='text-align: center; color: black;'>App for comparison ML models</h3>", 
+            unsafe_allow_html=True)
 st.header(" ")
 st.header(" ")
-# st.title('ML Audio recognition App :sunglasses:')
-# st.write('Welcome')
 
 
 
@@ -72,7 +62,7 @@ st.markdown("<h2 style='text-align: center; color: grey;'>Select data to analyze
 
 
 st.subheader("Select one of the samples")
-# st.write('selector will be implemented')
+
 selected_provided_file = st.selectbox(label="", 
                             options=["example of a cutting event", "example of a background sound"]
                             )
@@ -92,46 +82,35 @@ uploaded_audio_file = st.file_uploader(label="Select a short WAV file < 5 sec",
                                         disabled=False)
 
 
-def handle_uploaded_audio_file(uploaded_file):
-    audio_dub = pydub.AudioSegment.from_file(
-            file=uploaded_audio_file,
-            format=uploaded_audio_file.name.split(".")[-1]
-            )
-
-    channel_sounds = audio_dub.split_to_mono()
-    samples = [s.get_array_of_samples() for s in channel_sounds]
-
-    fp_arr1 = np.array(samples).T#.astype(np.float32)
-    fp_arr2 = fp_arr1 /  np.iinfo(samples[0].typecode).max
-    fp_arr3 = fp_arr2.astype(np.float32)
-
-    audio_arr_f = fp_arr3[:, 0]
-    audio_arr_sr_f = audio_dub.frame_rate
-    return audio_arr_f, audio_arr_sr_f
-
-
 
 
 ## Data Switch is here
 ##--------------------------------
 if uploaded_audio_file is not None:
     # st.write("YEP")
-    audio_arr, audio_arr_sr = handle_uploaded_audio_file(uploaded_audio_file)
-    # st.audio(uploaded_audio_file, format='audio/wav')
+    audio_arr_sr, audio_arr = scipy_wav.read(uploaded_audio_file)
 else:
-    # st.write("NOPE")
+    # st.write("NOPE") #444debug
     if selected_provided_file == "example of a cutting event":
-        audio_arr, audio_arr_sr = librosa.load('03-CM01B_Vorne.wav', sr=48000)
+        audio_arr_sr, audio_arr = scipy_wav.read('03-CM01B_Vorne.wav')
     if selected_provided_file == "example of a background sound":
-        audio_arr, audio_arr_sr = librosa.load('04-Schlitzen_am_LKW.wav', sr=44100)
-    virtualfile = io.BytesIO()
-    wavfile.write(virtualfile, rate=audio_arr_sr, data=audio_arr)
-    uploaded_audio_file = virtualfile
-    # st.audio(virtualfile, format='audio/wav')
+        audio_arr_sr, audio_arr = scipy_wav.read('04-Schlitzen_am_LKW.wav')
 
-## for debugging
-# st.code(audio_arr)
-# st.code(audio_arr_sr)
+## If stereo, then do averaging over channels 
+##-------------------------------------------
+if len(audio_arr.shape) > 1:
+    audio_arr = np.mean(audio_arr, axis=1, dtype=int)
+
+## Normalize values of audio 
+##--------------------------
+audio_arr = audio_arr / np.max(audio_arr)
+
+
+## Convert to virtula file to play it 
+##-------------------------------------------
+virtualfile = io.BytesIO()
+scipy_wav.write(virtualfile, rate=audio_arr_sr, data=audio_arr)
+uploaded_audio_file = virtualfile
 
 
 
@@ -152,7 +131,11 @@ st.markdown(" ##### _Listen the loaded data_")
 st.audio(uploaded_audio_file, format='audio/wav')
 # st.write("Waveform of the loaded data")
 st.markdown(" ##### _Waveform of the loaded data_")
-st.line_chart(audio_arr)
+# st.line_chart(audio_arr) #commented bcoz it is not so convenient to use on the page
+fig_wf, ax_wf = plt.subplots(1,1, figsize=(5, 2))
+ax_wf.plot(audio_arr)
+ax_wf.grid('True')
+st.pyplot(fig_wf)
 
 
 # ----------------------------------------
@@ -164,7 +147,7 @@ def get_spectrogram( waveform, sampling_rate ):
     waveform_1d_shape = tf.shape(waveform_1d)
     n_samples  = waveform_1d_shape[0]
     spectrogram = tf.signal.stft(
-                        tf.squeeze(waveform),
+                        tf.squeeze(tf.cast(waveform, tf.float32)),
                         frame_length=tf.cast(n_samples/100, dtype=tf.int32),
                         frame_step=tf.cast(n_samples/100/4, dtype=tf.int32),
                         )
@@ -213,8 +196,6 @@ fig_sp, ax_sp = plt.subplots(1,1, figsize=(5, 2))
 ax_sp.imshow(spectrogram_arr_resized)
 st.pyplot(fig_sp)
 
-# st.image(spectrogram_arr_resized)
-
 
 
 
@@ -229,13 +210,11 @@ st.pyplot(fig_sp)
 ## -------------------------------
 ## ====    Apply ML model     ====
 ## -------------------------------
-# st.header("Analysis with ML model")
+
 st.header(" ")
 st.header(" ")
 st.markdown("<h2 style='text-align: center; color: grey;'>Analysis with ML model</h2>", 
             unsafe_allow_html=True)
-# st.subheader("Select a model")
-# st.subheader("Predict using selected model")
 
 
 
