@@ -237,7 +237,8 @@ selected_ml_model = st.selectbox(label="Select ML model architecture and Data on
     options=[
     "ML model Rev.2 >> Trial Data",
 
-    "ML model EfficientNetB0 >> Realicstic Truck Data >> Piezo Mic",
+    "ML model EfficientNetB0 97acc>> Realicstic Truck Data >> Piezo Mic",
+    "ML model EfficientNetB0 upd1: 95acc >> Realicstic Truck Data >> Piezo Mic",
 
     "ML model Rev.2 >> Realicstic Truck Data >> Piezo Mic",
     "ML model Rev.2 >> Realicstic Truck Data >> Condenser Mic",
@@ -256,8 +257,11 @@ selected_ml_model = st.selectbox(label="Select ML model architecture and Data on
 if selected_ml_model == "ML model Rev.2 >> Trial Data":
     reloaded_model = tf.keras.models.load_model("./tf_models/modelTN2/modelTN2")
 
-if selected_ml_model == "ML model EfficientNetB0 >> Realicstic Truck Data >> Piezo Mic":
+if selected_ml_model == "ML model EfficientNetB0 97acc>> Realicstic Truck Data >> Piezo Mic":
     reloaded_model = tf.keras.models.load_model("./tf_models/efficientnetB0")
+
+if selected_ml_model == "ML model EfficientNetB0 upd1: 95acc >> Realicstic Truck Data >> Piezo Mic":
+    reloaded_model = tf.keras.models.load_model("./tf_models/efficientnet_95acc")
 
 if selected_ml_model == "ML model Rev.2 >> Realicstic Truck Data >> Piezo Mic":
     reloaded_model = tf.keras.models.load_model("./tf_models/modelTN_dsr_data_it4_475samples_16bit_piezo")
@@ -290,11 +294,17 @@ st.code(body=short_model_summary, language="Python")
 # -----------------------------------
 # multiple if-statements are needed to adjust inputs for models
 
-if selected_ml_model == "ML model EfficientNetB0 >> Realicstic Truck Data >> Piezo Mic":
+if selected_ml_model == "ML model EfficientNetB0 97acc>> Realicstic Truck Data >> Piezo Mic":
     spectrogram_shape_to_analyze_ENetB0 = (64, 64)
     spectrogram_arr_resized_ENetB0 = tf.image.resize(spectrogram_arr, spectrogram_shape_to_analyze_ENetB0)
     y_pred_ENetB0 = reloaded_model.predict(np.expand_dims(spectrogram_arr_resized_ENetB0, 0))
-    audio_data_predicted_label = np.round(y_pred_ENetB0[0,0], decimals=2)
+    audio_data_predicted_label = 1 - np.round(y_pred_ENetB0[0,0], decimals=2) #1-val bcoz model trained as 0=event, 1=bkg
+
+if  selected_ml_model == "ML model EfficientNetB0 upd1: 95acc >> Realicstic Truck Data >> Piezo Mic":
+    spectrogram_shape_to_analyze_ENetB0 = (128, 64)
+    spectrogram_arr_resized_ENetB0 = tf.image.resize(spectrogram_arr, spectrogram_shape_to_analyze_ENetB0)
+    y_pred_ENetB0 = reloaded_model.predict(np.expand_dims(spectrogram_arr_resized_ENetB0, 0))
+    audio_data_predicted_label = 1 - np.round(y_pred_ENetB0[0,0], decimals=2) #1-val bcoz model trained as 0=event, 1=bkg
 
 if selected_ml_model == 'ML model Rev.2 >> Trial Data':
     y_pred_1 = reloaded_model.predict(np.expand_dims(spectrogram_arr_resized, 0))
