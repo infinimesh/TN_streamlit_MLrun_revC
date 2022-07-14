@@ -84,6 +84,8 @@ uploaded_audio_file = st.file_uploader(label="Select a short WAV file < 5 sec",
 
 
 
+uploaded_audio_file_4debug = uploaded_audio_file #this expression must be before Data Switch
+
 ## Data Switch is here
 ##--------------------------------
 if uploaded_audio_file is not None:
@@ -252,6 +254,12 @@ selected_ml_model = st.selectbox(label="Select ML model architecture and Data on
 # ==== Load ML model and see it ====
 # ----------------------------------
 
+
+## Clean memory, remove models
+##--------------------------------
+tf.keras.backend.clear_session() # clean memory, remove models
+
+
 ## Load the model
 ##--------------------------------
 if selected_ml_model == "ML model Rev.2 >> Trial Data":
@@ -343,5 +351,5 @@ print(f"Model Prediction Output: {audio_data_predicted_label}")
 st.markdown(f"#### Model Prediction Output Index: {pred_index}")
 print(f"Model Prediction Output Index: {pred_index}")
 
-st.write(uploaded_audio_file)
-print(uploaded_audio_file)
+st.write(uploaded_audio_file_4debug)
+print(uploaded_audio_file_4debug)
