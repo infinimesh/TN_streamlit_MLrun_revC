@@ -116,7 +116,7 @@ if len(audio_arr.shape) > 1:
 
 ## Normalize values of audio 
 ##--------------------------
-audio_arr = audio_arr / np.max(audio_arr)
+audio_arr = (audio_arr - np.mean(audio_arr))/ np.std(audio_arr)
 
 
 ## Convert to virtula file to play it 
@@ -250,6 +250,8 @@ selected_ml_model = st.selectbox(label="Select ML model architecture and Data on
     options=[
     "ML model Rev.2 >> Trial Data",
 
+    "ML model Rev.4 >> Realicstic Truck Data Resampled Cleaner >> BPiezo+Piezo Mics",
+
     "ML model EfficientNetB0 97acc>> Realicstic Truck Data >> Piezo Mic",
     "ML model EfficientNetB0 upd1: 95acc >> Realicstic Truck Data >> Piezo Mic",
 
@@ -292,9 +294,8 @@ if selected_ml_model == "ML model Rev.3 >> Realicstic Truck Data >> Piezo Mic":
 if selected_ml_model == "ML model Rev.3 >> Realicstic Truck Data >> Condenser Mic":
     reloaded_model = tf.keras.models.load_model("./tf_models/modelTN__vgg_s8-64_l2233_s195e4__data_it4_475samples_16bit__condenser")
 
-
-
-
+if selected_ml_model == "ML model Rev.4 >> Realicstic Truck Data Resampled Cleaner >> BPiezo+Piezo Mics":
+    reloaded_model = tf.keras.models.load_model("./tf_models/modelTN_vgg_s8-64_l2233_s09e5_data_it4BrK13JvI2")
 
 
 ## Check model architecture
@@ -317,24 +318,29 @@ if selected_ml_model == "ML model EfficientNetB0 97acc>> Realicstic Truck Data >
     spectrogram_shape_to_analyze_ENetB0 = (64, 64)
     spectrogram_arr_resized_ENetB0 = tf.image.resize(spectrogram_arr, spectrogram_shape_to_analyze_ENetB0)
     y_pred_ENetB0 = reloaded_model.predict(np.expand_dims(spectrogram_arr_resized_ENetB0, 0))
-    audio_data_predicted_label = 1 - np.round(y_pred_ENetB0[0,0], decimals=2) #1-val bcoz model trained as 0=event, 1=bkg
+    audio_data_predicted_label = 1 - np.round(y_pred_ENetB0[0][0], decimals=2) #1-val bcoz model trained as 0=event, 1=bkg
+    ypred4debug = y_pred_ENetB0
 
 if  selected_ml_model == "ML model EfficientNetB0 upd1: 95acc >> Realicstic Truck Data >> Piezo Mic":
     spectrogram_shape_to_analyze_ENetB0 = (128, 64)
     spectrogram_arr_resized_ENetB0 = tf.image.resize(spectrogram_arr, spectrogram_shape_to_analyze_ENetB0)
     y_pred_ENetB0 = reloaded_model.predict(np.expand_dims(spectrogram_arr_resized_ENetB0, 0))
-    audio_data_predicted_label = 1 - np.round(y_pred_ENetB0[0,0], decimals=2) #1-val bcoz model trained as 0=event, 1=bkg
+    audio_data_predicted_label = 1 - np.round(y_pred_ENetB0[0][0], decimals=2) #1-val bcoz model trained as 0=event, 1=bkg
+    ypred4debug = y_pred_ENetB0
 
 if selected_ml_model == 'ML model Rev.2 >> Trial Data':
     y_pred_1 = reloaded_model.predict(np.expand_dims(spectrogram_arr_resized, 0))
-    audio_data_predicted_label = 1 - np.round(y_pred_1[0,0], decimals=2) #1-val bcoz model trained as 0=event, 1=bkg
+    audio_data_predicted_label = 1 - np.round(y_pred_1[0][0], decimals=2) #1-val bcoz model trained as 0=event, 1=bkg
+    ypred4debug = y_pred_1
 
 if selected_ml_model == "ML model Rev.2 >> Realicstic Truck Data >> Piezo Mic" or \
         selected_ml_model == "ML model Rev.2 >> Realicstic Truck Data >> Condenser Mic" or \
         selected_ml_model == "ML model Rev.3 >> Realicstic Truck Data >> Piezo Mic" or \
-        selected_ml_model == "ML model Rev.3 >> Realicstic Truck Data >> Condenser Mic" :
+        selected_ml_model == "ML model Rev.3 >> Realicstic Truck Data >> Condenser Mic" or \
+        selected_ml_model == "ML model Rev.4 >> Realicstic Truck Data Resampled Cleaner >> BPiezo+Piezo Mics" :
     y_pred_2 = reloaded_model.predict(np.expand_dims(spectrogram_arr_resized, 0))
-    audio_data_predicted_label = np.round(y_pred_2[0,0], decimals=2)
+    audio_data_predicted_label = np.round(y_pred_2[0][0], decimals=2)
+    ypred4debug = y_pred_2
 
 
 
@@ -358,6 +364,9 @@ st.markdown(f"### _{results_options[pred_index]}_")
 ##--------------------------------
 st.markdown(f"#### Model Prediction Output: {audio_data_predicted_label}")
 print(f"Model Prediction Output: {audio_data_predicted_label}")
+
+st.markdown(f"Raw Model Prediction Output: {ypred4debug}")
+print(f"Raw Model Prediction Output: {ypred4debug}")
 
 st.markdown(f"#### Model Prediction Output Index: {pred_index}")
 print(f"Model Prediction Output Index: {pred_index}")
